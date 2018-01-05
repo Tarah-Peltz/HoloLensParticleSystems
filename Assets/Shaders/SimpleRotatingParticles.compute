@@ -1,0 +1,22 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+struct Particle
+{
+	float3 position;
+	float speed;
+	float radius;
+};
+
+// Particle's data, shared with the shader
+RWStructuredBuffer<Particle> particleBuffer;
+
+// Variables passed from the CPU
+float _Time;
+
+[numthreads(1000, 1, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+	particleBuffer[id.x].position.x = particleBuffer[id.x].position.x  + sin(_Time * 3.141592) / 100;
+	particleBuffer[id.x].position.z = particleBuffer[id.x].position.z  + cos(_Time * 3.141592) / 100;
+}

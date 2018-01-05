@@ -1,0 +1,59 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+struct Particle
+{
+	float4 position;
+	float4 velocity;
+};
+
+
+// Particle's data, shared with the shader
+RWStructuredBuffer<Particle> particleBuffer;
+
+// Variables passed from the CPU
+float _time;
+
+//Sphere
+float _SpherePositionX;
+float _SpherePositionY;
+float _SpherePositionZ;
+float _SphereRadius;
+
+
+
+[numthreads(1000,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+	//Gravity
+	float3 G = float3(0.0, -9.8, 0.0);
+	//Time step
+	float dt = 0.005;
+
+	//Get position and velocity
+	float3 p0 = particleBuffer[id.x].position.xyz;
+	float3 v0 = particleBuffer[id.x].velocity.xyz;
+
+	//Compute new position and velocity
+	float3 p = p0 + v0*dt + 0.5*dt*dt*G;
+	float3 v = v0 + G*dt;
+
+	float3 xyz = float3 (_SpherePositionX, _SpherePositionY, _SpherePositionZ);
+
+	//Test if inside sphere
+	if (length(p - xyz) < _SphereRadius)
+	{
+		//Compute Normal
+		float3 N = normalize(p - xyz);
+		//Compute reflected velocity with damping
+		v = 0.8*reflect(v0, N);
+		//Set p0 on the sphere
+		p0 = xyz + _SphereRadius*N;
+		//Compute reflected position
+		p = p0 + v*dt + 0.5*dt*dt*G;
+	}
+
+	//Update position and velocity
+	particleBuffer[id.x].position.xyz = p;
+	particleBuffer[id.x].velocity.xyz = v;
+}
