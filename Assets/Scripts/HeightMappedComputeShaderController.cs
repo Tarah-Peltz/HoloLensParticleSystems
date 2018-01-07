@@ -13,10 +13,10 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
     public int threadGroupsX = 8;
     public float trianglePointSize = .02f;
 
-    Vector3 heightMapLowerXBound;
-    Vector3 heightMapUpperXBound;
-    Vector3 heightMapLowerZBound;
-    Vector3 heightMapUpperZBound;
+    Vector3 heightMapBottomLeft;
+    Vector3 heightMapBottomRight;
+    Vector3 heightMapUpperLeft;
+    Vector3 heightMapUpperRight;
     //public Material material;
     private Mesh mesh;
     Particle[] output;
@@ -32,36 +32,44 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
     // Use this for initialization
     void Start()
     {
-        Vector3[] heightMappedObjectVertices = heightMappedObject.GetComponent<MeshFilter>().sharedMesh.vertices;
+        Bounds b = heightMappedObject.GetComponent<Renderer>().bounds;
+        heightMapBottomLeft = new Vector3(b.center.x - b.extents.x, 0f, b.center.z - b.extents.z);
+        heightMapBottomRight = new Vector3(b.center.x + b.extents.x, 0f, b.center.z - b.extents.z);
+        heightMapUpperLeft = new Vector3(b.center.x - b.extents.x, 0f, b.center.z + b.extents.z);
+        heightMapUpperRight = new Vector3(b.center.x + b.extents.x, 0f, b.center.z + b.extents.z);
+
+
+        /*Vector3[] heightMappedObjectVertices = heightMappedObject.GetComponent<MeshFilter>().sharedMesh.vertices;
         Transform tr = heightMappedObject.transform;
-        heightMapLowerXBound = tr.TransformPoint(heightMappedObjectVertices[0]);
-        heightMapUpperXBound = tr.TransformPoint(heightMappedObjectVertices[0]);
-        heightMapLowerZBound = tr.TransformPoint(heightMappedObjectVertices[0]);
-        heightMapUpperZBound = tr.TransformPoint(heightMappedObjectVertices[0]);
+        heightMapBottomLeft = tr.TransformPoint(heightMappedObjectVertices[0]);
+        heightMapBottomRight = tr.TransformPoint(heightMappedObjectVertices[0]);
+        heightMapUpperLeft = tr.TransformPoint(heightMappedObjectVertices[0]);
+        heightMapUpperRight = tr.TransformPoint(heightMappedObjectVertices[0]);
 
         for (int i = 1; i < heightMappedObjectVertices.Length; i++)
         {
-            if (tr.TransformPoint(heightMappedObjectVertices[i]).x < heightMapLowerXBound.x)
+            if (tr.TransformPoint(heightMappedObjectVertices[i]).x < heightMapBottomLeft.x)
             {
-                heightMapLowerXBound = tr.TransformPoint(heightMappedObjectVertices[i]);
+                heightMapBottomLeft = tr.TransformPoint(heightMappedObjectVertices[i]);
             }
-            if (tr.TransformPoint(heightMappedObjectVertices[i]).x > heightMapUpperXBound.x)
+            if (tr.TransformPoint(heightMappedObjectVertices[i]).x > heightMapBottomRight.x)
             {
-                heightMapUpperXBound = tr.TransformPoint(heightMappedObjectVertices[i]);
+                heightMapBottomRight = tr.TransformPoint(heightMappedObjectVertices[i]);
             }
-            if (tr.TransformPoint(heightMappedObjectVertices[i]).z < heightMapLowerZBound.z)
+            if (tr.TransformPoint(heightMappedObjectVertices[i]).z < heightMapUpperLeft.z)
             {
-                heightMapLowerZBound = tr.TransformPoint(heightMappedObjectVertices[i]);
+                heightMapUpperLeft = tr.TransformPoint(heightMappedObjectVertices[i]);
             }
-            if (tr.TransformPoint(heightMappedObjectVertices[i]).z > heightMapUpperZBound.z)
+            if (tr.TransformPoint(heightMappedObjectVertices[i]).z > heightMapUpperRight.z)
             {
-                heightMapUpperZBound = tr.TransformPoint(heightMappedObjectVertices[i]);
+                heightMapUpperRight = tr.TransformPoint(heightMappedObjectVertices[i]);
             }
-        }
-        Debug.Log("Lower X: " + heightMapLowerXBound.ToString());
-        Debug.Log("Upper X: " + heightMapUpperXBound.ToString());
-        Debug.Log("Lower Z: " + heightMapLowerZBound.ToString());
-        Debug.Log("Upper Z: " + heightMapUpperZBound.ToString());
+        }*/
+        Debug.Log("Bottom Left: " + heightMapBottomLeft.ToString());
+        Debug.Log("Bottom Right: " + heightMapBottomRight.ToString());
+        Debug.Log("Top Left: " + heightMapUpperLeft.ToString());
+        Debug.Log("Top Right: " + heightMapUpperRight.ToString());
+
         mesh = new Mesh();
         GetComponent<MeshFilter>().mesh = mesh;
         particleBuffer = new ComputeBuffer(numberOfParticles, particleSize);
@@ -70,9 +78,9 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
 
         for (int i = 0; i < numberOfParticles; ++i)
         {
-            particleArray[i].position.x = UnityEngine.Random.Range((float)(heightMapLowerXBound.x), (float)(heightMapUpperXBound.x));
-            particleArray[i].position.y = UnityEngine.Random.Range(.2f, 4.0f);
-            particleArray[i].position.z = UnityEngine.Random.Range((float)(heightMapLowerZBound.z), (float)(heightMapUpperZBound.z));
+            particleArray[i].position.x = UnityEngine.Random.Range((float)(heightMapBottomLeft.x), (float)(heightMapBottomRight.x));
+            particleArray[i].position.y = UnityEngine.Random.Range(b.center.y + b.extents.y + .1f, b.center.y + 2*b.extents.y);
+            particleArray[i].position.z = UnityEngine.Random.Range((float)(heightMapBottomLeft.z), (float)(heightMapUpperLeft.z));
             particleArray[i].position.w = 1;
 
             particleArray[i].velocity.x = UnityEngine.Random.Range(.01f, .1f);
@@ -83,12 +91,17 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
         particleBuffer.SetData(particleArray);
         kernelID = compute.FindKernel("CSMain");
         compute.SetBuffer(kernelID, "particleBuffer", particleBuffer);
+        compute.SetTexture(kernelID, "heightMap", heightMap);
         CreateMesh(particleArray);
     }
 
     // Update is called once per frame
     void Update()
     {
+        Debug.DrawLine(heightMapBottomLeft, heightMapBottomRight, Color.red);
+        Debug.DrawLine(heightMapBottomLeft, heightMapUpperLeft, Color.green);
+        Debug.DrawLine(heightMapUpperLeft, heightMapUpperRight, Color.blue);
+        Debug.DrawLine(heightMapBottomRight, heightMapUpperRight, Color.yellow);
         //In theory, setting time from C# is the same as the built in time value of the vertex shader: https://forum.unity.com/threads/global-shader-variables-in-compute-shaders.471211/
 
         compute.SetFloat("_time", Time.realtimeSinceStartup);
