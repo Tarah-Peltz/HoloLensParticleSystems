@@ -37,34 +37,6 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
         heightMapBottomRight = new Vector3(b.center.x + b.extents.x, 0f, b.center.z - b.extents.z);
         heightMapUpperLeft = new Vector3(b.center.x - b.extents.x, 0f, b.center.z + b.extents.z);
         heightMapUpperRight = new Vector3(b.center.x + b.extents.x, 0f, b.center.z + b.extents.z);
-
-
-        /*Vector3[] heightMappedObjectVertices = heightMappedObject.GetComponent<MeshFilter>().sharedMesh.vertices;
-        Transform tr = heightMappedObject.transform;
-        heightMapBottomLeft = tr.TransformPoint(heightMappedObjectVertices[0]);
-        heightMapBottomRight = tr.TransformPoint(heightMappedObjectVertices[0]);
-        heightMapUpperLeft = tr.TransformPoint(heightMappedObjectVertices[0]);
-        heightMapUpperRight = tr.TransformPoint(heightMappedObjectVertices[0]);
-
-        for (int i = 1; i < heightMappedObjectVertices.Length; i++)
-        {
-            if (tr.TransformPoint(heightMappedObjectVertices[i]).x < heightMapBottomLeft.x)
-            {
-                heightMapBottomLeft = tr.TransformPoint(heightMappedObjectVertices[i]);
-            }
-            if (tr.TransformPoint(heightMappedObjectVertices[i]).x > heightMapBottomRight.x)
-            {
-                heightMapBottomRight = tr.TransformPoint(heightMappedObjectVertices[i]);
-            }
-            if (tr.TransformPoint(heightMappedObjectVertices[i]).z < heightMapUpperLeft.z)
-            {
-                heightMapUpperLeft = tr.TransformPoint(heightMappedObjectVertices[i]);
-            }
-            if (tr.TransformPoint(heightMappedObjectVertices[i]).z > heightMapUpperRight.z)
-            {
-                heightMapUpperRight = tr.TransformPoint(heightMappedObjectVertices[i]);
-            }
-        }*/
         Debug.Log("Bottom Left: " + heightMapBottomLeft.ToString());
         Debug.Log("Bottom Right: " + heightMapBottomRight.ToString());
         Debug.Log("Top Left: " + heightMapUpperLeft.ToString());
@@ -91,7 +63,6 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
         particleBuffer.SetData(particleArray);
         kernelID = compute.FindKernel("CSMain");
         compute.SetBuffer(kernelID, "particleBuffer", particleBuffer);
-        compute.SetTexture(kernelID, "heightMap", heightMap);
         CreateMesh(particleArray);
     }
 
@@ -105,6 +76,7 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
         //In theory, setting time from C# is the same as the built in time value of the vertex shader: https://forum.unity.com/threads/global-shader-variables-in-compute-shaders.471211/
 
         compute.SetFloat("_time", Time.realtimeSinceStartup);
+        compute.SetTexture(kernelID, "heightMap", heightMap);
         compute.Dispatch(kernelID, 1000, 1, 1);
         particleBuffer.GetData(output);
         List<Vector3> pointArray = new List<Vector3>();

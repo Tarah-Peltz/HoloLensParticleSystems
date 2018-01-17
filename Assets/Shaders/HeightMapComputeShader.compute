@@ -19,7 +19,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 {
 	//particleBuffer[id.x].position.x = particleBuffer[id.x].position.x + sin(_time * 3.141592) / 100;
 	//particleBuffer[id.x].position.z = particleBuffer[id.x].position.z + cos(_time * 3.141592) / 100;
-	particleBuffer[id.x].position.x = heightMap[id].x;
-	particleBuffer[id.x].position.y = heightMap[id].x + heightMap[id.x].y + heightMap[id.x].z;
-	particleBuffer[id.x].position.z = heightMap[id].z;
+	//particleBuffer[id.x].position.x = heightMap[id.xy];
+	particleBuffer[id.x].position.y = heightMap[id.xy];
+	//particleBuffer[id.x].position.z = heightMap[id.xy];
 }
