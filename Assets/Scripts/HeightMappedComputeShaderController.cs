@@ -1,9 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 
 public class HeightMappedComputeShaderController : MonoBehaviour {
     ComputeBuffer particleBuffer;
+    ComputeBuffer colorBuffer;
     int kernelID;
     public ComputeShader compute;
     public Texture2D heightMap;
@@ -32,6 +34,12 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
     // Use this for initialization
     void Start()
     {
+        //Makes the texture readable: https://forum.unity.com/threads/help-on-setting-read-write-enabled-flag-on-texture.211235/
+        string path = AssetDatabase.GetAssetPath(heightMap);
+        TextureImporter A = (TextureImporter)AssetImporter.GetAtPath(path);
+        A.isReadable = true;
+        AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+
         Bounds b = heightMappedObject.GetComponent<Renderer>().bounds;
         heightMapBottomLeft = new Vector3(b.center.x - b.extents.x, 0f, b.center.z - b.extents.z);
         heightMapBottomRight = new Vector3(b.center.x + b.extents.x, 0f, b.center.z - b.extents.z);
@@ -60,10 +68,22 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
             particleArray[i].velocity.z = UnityEngine.Random.Range(.01f, .1f);
             particleArray[i].velocity.w = 0;
         }
+
         particleBuffer.SetData(particleArray);
         kernelID = compute.FindKernel("CSMain");
         compute.SetBuffer(kernelID, "particleBuffer", particleBuffer);
         CreateMesh(particleArray);
+
+        colorBuffer = new ComputeBuffer(heightMap.width * heightMap.height, sizeof(float) * 4);
+        Color[] colorData = heightMap.GetPixels(0);
+        colorBuffer.SetData(colorData);
+        compute.SetBuffer(kernelID, "heightMap", colorBuffer);
+
+        for (int i = 0; i < colorData.Length;) {
+            Debug.Log(colorData[i]);
+            i += 1000;
+        }
+
     }
 
     // Update is called once per frame
@@ -76,7 +96,7 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
         //In theory, setting time from C# is the same as the built in time value of the vertex shader: https://forum.unity.com/threads/global-shader-variables-in-compute-shaders.471211/
 
         compute.SetFloat("_time", Time.realtimeSinceStartup);
-        compute.SetTexture(kernelID, "heightMap", heightMap);
+       
         compute.Dispatch(kernelID, 1000, 1, 1);
         particleBuffer.GetData(output);
         List<Vector3> pointArray = new List<Vector3>();
