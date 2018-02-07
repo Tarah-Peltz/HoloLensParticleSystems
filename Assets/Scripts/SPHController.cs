@@ -2,10 +2,14 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class CollisionComputeShaderController : MonoBehaviour {
+public class SPHController : MonoBehaviour {
     ComputeBuffer particleBuffer;
-    int kernelID;
-    public ComputeShader compute;
+    int kernelID1;
+    int kernelID2;
+    int kernelID3;
+    public ComputeShader compute1;
+    public ComputeShader compute2;
+    public ComputeShader compute3;
     public int numberOfParticles = 1000;
     public int particleSize = 24;
     public int threadGroupsX = 8;
@@ -38,7 +42,7 @@ public class CollisionComputeShaderController : MonoBehaviour {
         for (int i = 0; i < numberOfParticles; ++i)
         {
             particleArray[i].position.x = UnityEngine.Random.Range((float)(spherePositionX - sphereRadius - .1), (float)(spherePositionX + sphereRadius + .1));
-            particleArray[i].position.y = UnityEngine.Random.Range((float)(spherePositionY + 2*sphereRadius), (float)(spherePositionY + 3*sphereRadius));
+            particleArray[i].position.y = UnityEngine.Random.Range((float)(spherePositionY + 2 * sphereRadius), (float)(spherePositionY + 3 * sphereRadius));
             particleArray[i].position.z = UnityEngine.Random.Range((float)(spherePositionZ - sphereRadius - .1), (float)(spherePositionZ + sphereRadius + .1));
             particleArray[i].position.w = 1;
 
@@ -48,8 +52,12 @@ public class CollisionComputeShaderController : MonoBehaviour {
             particleArray[i].velocity.w = 0;
         }
         particleBuffer.SetData(particleArray);
-        kernelID = compute.FindKernel("CSMain");
-        compute.SetBuffer(kernelID, "particleBuffer", particleBuffer);
+        kernelID1 = compute1.FindKernel("CSMain");
+        kernelID2 = compute2.FindKernel("CSMain");
+        kernelID3 = compute3.FindKernel("CSMain");
+        compute1.SetBuffer(kernelID1, "particleBuffer", particleBuffer);
+        compute2.SetBuffer(kernelID2, "particleBuffer", particleBuffer);
+        compute3.SetBuffer(kernelID3, "particleBuffer", particleBuffer);
         CreateMesh(particleArray);
     }
 
@@ -58,12 +66,12 @@ public class CollisionComputeShaderController : MonoBehaviour {
     {
         //In theory, setting time from C# is the same as the built in time value of the vertex shader: https://forum.unity.com/threads/global-shader-variables-in-compute-shaders.471211/
 
-        compute.SetFloat("_time", Time.realtimeSinceStartup);
-        compute.SetFloat("_SpherePositionX", spherePositionX);
-        compute.SetFloat("_SpherePositionY", spherePositionY);
-        compute.SetFloat("_SpherePositionZ", spherePositionZ);
-        compute.SetFloat("_SphereRadius", sphereRadius);
-        compute.Dispatch(kernelID, numberOfParticles/8, 1, 1);
+        compute1.SetFloat("_time", Time.realtimeSinceStartup);
+        compute1.Dispatch(kernelID1, numberOfParticles / 8, 1, 1);
+        compute2.SetFloat("_time", Time.realtimeSinceStartup);
+        compute2.Dispatch(kernelID1, numberOfParticles / 8, 1, 1);
+        compute3.SetFloat("_time", Time.realtimeSinceStartup);
+        compute3.Dispatch(kernelID1, numberOfParticles / 8, 1, 1);
         particleBuffer.GetData(output);
         List<Vector3> pointArray = new List<Vector3>();
         for (int i = 0; i < numberOfParticles; i++)

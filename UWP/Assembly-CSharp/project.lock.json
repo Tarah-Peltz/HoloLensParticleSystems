@@ -15544,12 +15544,12 @@
   },
   "project": {
     "restore": {
-      "projectUniqueName": "C:\\Users\\Tarah Peltz\\Desktop\\FluidSims\\MyWork\\Unity5.4\\Unity5ParticleSystem\\UWP\\Assembly-CSharp\\Assembly-CSharp.csproj",
+      "projectUniqueName": "C:\\Users\\Tarah Peltz\\Desktop\\FluidSims\\MyWork\\Unity5.4\\UnityParticleProject\\UWP\\Assembly-CSharp\\Assembly-CSharp.csproj",
       "projectName": "Assembly-CSharp",
-      "projectPath": "C:\\Users\\Tarah Peltz\\Desktop\\FluidSims\\MyWork\\Unity5.4\\Unity5ParticleSystem\\UWP\\Assembly-CSharp\\Assembly-CSharp.csproj",
-      "projectJsonPath": "C:\\Users\\Tarah Peltz\\Desktop\\FluidSims\\MyWork\\Unity5.4\\Unity5ParticleSystem\\UWP\\Assembly-CSharp\\project.json",
+      "projectPath": "C:\\Users\\Tarah Peltz\\Desktop\\FluidSims\\MyWork\\Unity5.4\\UnityParticleProject\\UWP\\Assembly-CSharp\\Assembly-CSharp.csproj",
+      "projectJsonPath": "C:\\Users\\Tarah Peltz\\Desktop\\FluidSims\\MyWork\\Unity5.4\\UnityParticleProject\\UWP\\Assembly-CSharp\\project.json",
       "packagesPath": "C:\\Users\\Tarah Peltz\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Tarah Peltz\\Desktop\\FluidSims\\MyWork\\Unity5.4\\Unity5ParticleSystem\\UWP\\Assembly-CSharp\\obj\\x86\\Release\\",
+      "outputPath": "C:\\Users\\Tarah Peltz\\Desktop\\FluidSims\\MyWork\\Unity5.4\\UnityParticleProject\\UWP\\Assembly-CSharp\\obj\\x86\\Release\\",
       "projectStyle": "ProjectJson",
       "configFilePaths": [
         "C:\\Users\\Tarah Peltz\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -15561,8 +15561,8 @@
       "frameworks": {
         "uap10.0.10240": {
           "projectReferences": {
-            "C:\\Users\\Tarah Peltz\\Desktop\\FluidSims\\MyWork\\Unity5.4\\Unity5ParticleSystem\\UWP\\Assembly-CSharp-firstpass\\Assembly-CSharp-firstpass.csproj": {
-              "projectPath": "C:\\Users\\Tarah Peltz\\Desktop\\FluidSims\\MyWork\\Unity5.4\\Unity5ParticleSystem\\UWP\\Assembly-CSharp-firstpass\\Assembly-CSharp-firstpass.csproj"
+            "C:\\Users\\Tarah Peltz\\Desktop\\FluidSims\\MyWork\\Unity5.4\\UnityParticleProject\\UWP\\Assembly-CSharp-firstpass\\Assembly-CSharp-firstpass.csproj": {
+              "projectPath": "C:\\Users\\Tarah Peltz\\Desktop\\FluidSims\\MyWork\\Unity5.4\\UnityParticleProject\\UWP\\Assembly-CSharp-firstpass\\Assembly-CSharp-firstpass.csproj"
             }
           }
         }

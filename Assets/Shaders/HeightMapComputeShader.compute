@@ -9,17 +9,27 @@ struct Particle
 
 // Particle's data, shared with the shader
 RWStructuredBuffer<Particle> particleBuffer;
-StructuredBuffer<float4> heightMap;
+Texture2D<float4> _heightMapTexture;
+SamplerState sampler_heightMapTexture;
+//StructuredBuffer<float4> heightMap;
 
 // Variables passed from the CPU
 float _time;
+//float4 textureCenter;
+//float textureXLength;
+//float textureZLength;
 
-[numthreads(16, 16, 1)]
+
+[numthreads(32, 1, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
 	//particleBuffer[id.x].position.x = particleBuffer[id.x].position.x + sin(_time * 3.141592) / 100;
 	//particleBuffer[id.x].position.z = particleBuffer[id.x].position.z + cos(_time * 3.141592) / 100;
-	//particleBuffer[id.x].position.x = heightMap[id.xy];
-	particleBuffer[id.x].position.y = heightMap[id.y];
+	//particleBuffer[id.x].position.x = heightMap[id.x];
 	//particleBuffer[id.x].position.z = heightMap[id.xy];
+
+	//float xRatio = (particleBuffer[id.x].position.x + textureXLength - textureCenter.x) / textureXLength;
+	//float zRatio = (particleBuffer[id.x].position.z + textureZLength - textureCenter.z) / textureZLength;
+	//particleBuffer[id.x].position.y = particleBuffer[id.x].position.y + heightMapTexture.SampleLevel(samplerheightMapTexture, xRatio, zRatio, 0) + _time;
+	particleBuffer[id.x].position.y = _heightMapTexture.SampleLevel(sampler_heightMapTexture, float2(1,1), 0, int2(0,0)).r ;
 }

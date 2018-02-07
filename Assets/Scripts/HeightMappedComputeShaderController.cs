@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
+//using UnityEditor;
 
 public class HeightMappedComputeShaderController : MonoBehaviour {
     ComputeBuffer particleBuffer;
@@ -31,16 +31,19 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
         public Vector4 velocity;
     }
 
+    Bounds b;
+
     // Use this for initialization
     void Start()
     {
+        //numberOfParticles = heightMap.width * heightMap.height / 64;
         //Makes the texture readable: https://forum.unity.com/threads/help-on-setting-read-write-enabled-flag-on-texture.211235/
-        string path = AssetDatabase.GetAssetPath(heightMap);
+        /*string path = AssetDatabase.GetAssetPath(heightMap);
         TextureImporter A = (TextureImporter)AssetImporter.GetAtPath(path);
         A.isReadable = true;
-        AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+        AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);*/
 
-        Bounds b = heightMappedObject.GetComponent<Renderer>().bounds;
+        b = heightMappedObject.GetComponent<Renderer>().bounds;
         heightMapBottomLeft = new Vector3(b.center.x - b.extents.x, 0f, b.center.z - b.extents.z);
         heightMapBottomRight = new Vector3(b.center.x + b.extents.x, 0f, b.center.z - b.extents.z);
         heightMapUpperLeft = new Vector3(b.center.x - b.extents.x, 0f, b.center.z + b.extents.z);
@@ -56,33 +59,37 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
         Particle[] particleArray = new Particle[numberOfParticles];
         output = new Particle[numberOfParticles];
 
-        for (int i = 0; i < numberOfParticles; ++i)
-        {
-            particleArray[i].position.x = UnityEngine.Random.Range((float)(heightMapBottomLeft.x), (float)(heightMapBottomRight.x));
-            particleArray[i].position.y = UnityEngine.Random.Range(b.center.y + b.extents.y + .1f, b.center.y + 2*b.extents.y);
-            particleArray[i].position.z = UnityEngine.Random.Range((float)(heightMapBottomLeft.z), (float)(heightMapUpperLeft.z));
-            particleArray[i].position.w = 1;
+        for (int i = 0; i < numberOfParticles; ++i) { 
 
-            particleArray[i].velocity.x = UnityEngine.Random.Range(.01f, .1f);
-            particleArray[i].velocity.y = UnityEngine.Random.Range(.01f, .1f);
-            particleArray[i].velocity.z = UnityEngine.Random.Range(.01f, .1f);
-            particleArray[i].velocity.w = 0;
+                particleArray[i].position.x = UnityEngine.Random.Range((float)(heightMapBottomLeft.x), (float)(heightMapBottomRight.x));
+                //particleArray[i].position.x = heightMapBottomLeft.x + ((heightMapBottomRight.x - heightMapBottomLeft.x) * j / heightMap.width/8);
+                //particleArray[i].position.y = UnityEngine.Random.Range(b.center.y + b.extents.y + .1f, b.center.y + 2*b.extents.y);
+                particleArray[i].position.y = 1f;
+                particleArray[i].position.z = UnityEngine.Random.Range((float)(heightMapBottomLeft.z), (float)(heightMapUpperLeft.z));
+                //particleArray[i].position.z = heightMapBottomLeft.z + ((heightMapBottomRight.z - heightMapBottomLeft.z) *  / heightMap.height/8);
+                particleArray[i].position.w = 1;
+
+                particleArray[i].velocity.x = UnityEngine.Random.Range(.01f, .1f);
+                particleArray[i].velocity.y = UnityEngine.Random.Range(.01f, .1f);
+                particleArray[i].velocity.z = UnityEngine.Random.Range(.01f, .1f);
+                particleArray[i].velocity.w = 0;
+            
         }
 
         particleBuffer.SetData(particleArray);
         kernelID = compute.FindKernel("CSMain");
         compute.SetBuffer(kernelID, "particleBuffer", particleBuffer);
         CreateMesh(particleArray);
-
-        colorBuffer = new ComputeBuffer(heightMap.width * heightMap.height, sizeof(float) * 4);
+        compute.SetTexture(kernelID, "_heightMapTexture", heightMap);
+        /*colorBuffer = new ComputeBuffer(heightMap.width * heightMap.height, sizeof(float) * 4);
         Color[] colorData = heightMap.GetPixels(0);
         colorBuffer.SetData(colorData);
-        compute.SetBuffer(kernelID, "heightMap", colorBuffer);
+        compute.SetBuffer(kernelID, "heightMap", colorBuffer);*/
 
-        for (int i = 0; i < colorData.Length;) {
+        /*for (int i = 0; i < colorData.Length;) {
             Debug.Log(colorData[i]);
             i += 1000;
-        }
+        }*/ //This piece shows that the data we're reading is indeed a black and white image since R=G=B
 
     }
 
@@ -96,8 +103,11 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
         //In theory, setting time from C# is the same as the built in time value of the vertex shader: https://forum.unity.com/threads/global-shader-variables-in-compute-shaders.471211/
 
         compute.SetFloat("_time", Time.realtimeSinceStartup);
-       
-        compute.Dispatch(kernelID, 1000, 1, 1);
+       // compute.SetFloat("textureXLength", 2*b.extents.x);
+       // compute.SetFloat("textureZLength", 2*b.extents.z);
+       // compute.SetVector("textureCenter", b.center);
+
+        compute.Dispatch(kernelID, numberOfParticles/32, 1, 1);
         particleBuffer.GetData(output);
         List<Vector3> pointArray = new List<Vector3>();
         for (int i = 0; i < numberOfParticles; i++)
@@ -107,6 +117,7 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
             pointArray.Add(new Vector3(output[i].position.x - trianglePointSize, output[i].position.y - trianglePointSize, output[i].position.z));
         }
         mesh.SetVertices(pointArray);
+        Debug.Log(output[0].position.y);
         //Debug.Log(output[0].position.x);
     }
 

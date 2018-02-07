@@ -22,7 +22,7 @@ float _SphereRadius;
 
 
 
-[numthreads(1000,1,1)]
+[numthreads(8,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
 	//Gravity
@@ -46,7 +46,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 		//Compute Normal
 		float3 N = normalize(p - xyz);
 		//Compute reflected velocity with damping
-		v = 0.8*reflect(v0, N);
+		v = 0.5*reflect(v0, N);
 		//Set p0 on the sphere
 		p0 = xyz + _SphereRadius*N;
 		//Compute reflected position
