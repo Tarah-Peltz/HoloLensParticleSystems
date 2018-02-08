@@ -7,8 +7,6 @@ public class CollisionComputeShaderController : MonoBehaviour {
     int kernelID;
     public ComputeShader compute;
     public int numberOfParticles = 1000;
-    public int particleSize = 24;
-    public int threadGroupsX = 8;
     public float trianglePointSize = .02f;
     public float spherePositionX = 0f;
     public float spherePositionY = 0f;
@@ -31,7 +29,7 @@ public class CollisionComputeShaderController : MonoBehaviour {
     {
         mesh = new Mesh();
         GetComponent<MeshFilter>().mesh = mesh;
-        particleBuffer = new ComputeBuffer(numberOfParticles, particleSize);
+        particleBuffer = new ComputeBuffer(numberOfParticles, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Particle)));
         Particle[] particleArray = new Particle[numberOfParticles];
         output = new Particle[numberOfParticles];
 

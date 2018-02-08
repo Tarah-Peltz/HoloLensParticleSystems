@@ -1,21 +1,50 @@
-﻿// Each #kernel tells which function to compile; you can have many kernels
+﻿//This is based upon the work from this GitHub:https://github.com/multiprecision/sph_opengl.git
+// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
-
 struct Particle
 {
-	float4 position;
-	float4 velocity;
+	float4 positionAndDensity;
+	float4 velocityAndPressure;
+	float4 force;
 };
+
 
 
 // Particle's data, shared with the shader
 RWStructuredBuffer<Particle> particleBuffer;
 
 // Variables passed from the CPU
-float _time;
+float _timeStep;
+int _numberOfParticles;
+float _boundaryDamping;
 
 [numthreads(8, 1, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-	particleBuffer[id.x].position.y += .001;
+	float2 acceleration = particleBuffer[id.x].force.xy / particleBuffer[id.x].positionAndDensity.w;
+	float2 newVelocity = particleBuffer[id.x].velocityAndPressure.xy + _timeStep * acceleration;
+	float2 newPosition = particleBuffer[id.x].positionAndDensity.xy + _timeStep * newVelocity;
+	//HAS TO BE A BETTER WAY TO DO THIS
+	if (newPosition.x < -6) {
+		newPosition.x = -6;
+		newVelocity.x *= -1 * _boundaryDamping;
+	}
+	else if (newPosition.x > 6)
+	{
+		newPosition.x = 6;
+		newVelocity.x *= -1 * _boundaryDamping;
+	}
+	else if (newPosition.y < 0)
+	{
+		newPosition.y = 0;
+		newVelocity.y *= -1 * _boundaryDamping;
+	}
+	else if (newPosition.y > 6)
+	{
+		newPosition.y = 6;
+		newVelocity.y *= -1 * _boundaryDamping;
+	}
+
+	particleBuffer[id.x].velocityAndPressure.xy = newVelocity;
+	particleBuffer[id.x].positionAndDensity.xy = newPosition;
 }

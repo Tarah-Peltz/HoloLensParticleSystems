@@ -20,10 +20,10 @@ float _time;
 //float textureZLength;
 
 
-[numthreads(32, 1, 1)]
+[numthreads(8, 1, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-	//particleBuffer[id.x].position.x = particleBuffer[id.x].position.x + sin(_time * 3.141592) / 100;
+	particleBuffer[id.x].position.x = particleBuffer[id.x].position.x + sin(_time * 3.141592) / 100;
 	//particleBuffer[id.x].position.z = particleBuffer[id.x].position.z + cos(_time * 3.141592) / 100;
 	//particleBuffer[id.x].position.x = heightMap[id.x];
 	//particleBuffer[id.x].position.z = heightMap[id.xy];
@@ -31,5 +31,5 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 	//float xRatio = (particleBuffer[id.x].position.x + textureXLength - textureCenter.x) / textureXLength;
 	//float zRatio = (particleBuffer[id.x].position.z + textureZLength - textureCenter.z) / textureZLength;
 	//particleBuffer[id.x].position.y = particleBuffer[id.x].position.y + heightMapTexture.SampleLevel(samplerheightMapTexture, xRatio, zRatio, 0) + _time;
-	particleBuffer[id.x].position.y = _heightMapTexture.SampleLevel(sampler_heightMapTexture, float2(1,1), 0, int2(0,0)).r ;
+	//particleBuffer[id.x].position.y = _heightMapTexture.SampleLevel(sampler_heightMapTexture, float2(1,1), 0, int2(0,0)).r ;
 }

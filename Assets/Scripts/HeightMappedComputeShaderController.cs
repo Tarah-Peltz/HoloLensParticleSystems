@@ -11,8 +11,6 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
     public Texture2D heightMap;
     public GameObject heightMappedObject;
     public int numberOfParticles = 1000;
-    public int particleSize = 24;
-    public int threadGroupsX = 8;
     public float trianglePointSize = .02f;
 
     Vector3 heightMapBottomLeft;
@@ -55,7 +53,7 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
 
         mesh = new Mesh();
         GetComponent<MeshFilter>().mesh = mesh;
-        particleBuffer = new ComputeBuffer(numberOfParticles, particleSize);
+        particleBuffer = new ComputeBuffer(numberOfParticles, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Particle)));
         Particle[] particleArray = new Particle[numberOfParticles];
         output = new Particle[numberOfParticles];
 
@@ -107,7 +105,7 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
        // compute.SetFloat("textureZLength", 2*b.extents.z);
        // compute.SetVector("textureCenter", b.center);
 
-        compute.Dispatch(kernelID, numberOfParticles/32, 1, 1);
+        compute.Dispatch(kernelID, numberOfParticles/8, 1, 1);
         particleBuffer.GetData(output);
         List<Vector3> pointArray = new List<Vector3>();
         for (int i = 0; i < numberOfParticles; i++)

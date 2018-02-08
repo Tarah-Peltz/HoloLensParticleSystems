@@ -1,10 +1,12 @@
-﻿// Each #kernel tells which function to compile; you can have many kernels
+﻿//This is based upon the work from this GitHub:https://github.com/multiprecision/sph_opengl.git
+// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
 
 struct Particle
 {
-	float4 position;
-	float4 velocity;
+	float4 positionAndDensity;
+	float4 velocityAndPressure;
+	float4 force;
 };
 
 
@@ -13,9 +15,41 @@ RWStructuredBuffer<Particle> particleBuffer;
 
 // Variables passed from the CPU
 float _time;
+float _particleMass;
+float _smoothingLength;
+int _numberOfParticles;
+float _viscosity;
+
+
+
 
 [numthreads(8, 1, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-	particleBuffer[id.x].position.z = particleBuffer[id.x].velocity.x + cos(_time);
+	float pi = 3.1415927410125732421875f;
+	float2 G = float2(1000, -98000.);
+	float2 pressureForce = float2(0, 0);
+	float2 viscosityForce = float2(0, 0);
+	for (uint i = 0; i < _numberOfParticles; i++) {
+		if (id.x == i) {
+			continue; //This forces it to jump to the next iteration of the for loop. Can we eliminate branching here?
+		}
+		float2 delta = particleBuffer[id.x].positionAndDensity.xy - particleBuffer[i].positionAndDensity.xy;
+		float r = length(delta);
+		if (r < _smoothingLength) {
+
+			pressureForce -= _particleMass * (particleBuffer[id.x].velocityAndPressure.w + particleBuffer[i].velocityAndPressure.w) 
+				/ (2.0f * particleBuffer[i].positionAndDensity.w) * -45.f / (pi * pow(_smoothingLength, 6)) 
+				* pow(_smoothingLength - r, 2) * normalize(delta);
+
+			viscosityForce += _particleMass * (particleBuffer[i].velocityAndPressure.xy - particleBuffer[id.x].velocityAndPressure.xy) 
+				/ particleBuffer[i].positionAndDensity.w * 45.f / (pi * pow(_smoothingLength, 6)) 
+				* (_smoothingLength - r);
+				// Laplacian of viscosity kernel
+		}
+	}
+
+	viscosityForce *= _viscosity;
+	float2 externalForce = particleBuffer[id.x].positionAndDensity.w * G;
+	particleBuffer[id.x].force.xy = pressureForce + viscosityForce + externalForce;
 }
