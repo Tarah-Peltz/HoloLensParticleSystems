@@ -27,7 +27,7 @@ float _viscosity;
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
 	float pi = 3.1415927410125732421875f;
-	float2 G = float2(1000, -98000.);
+	float2 G = float2(500, -98000.);
 	float2 pressureForce = float2(0, 0);
 	float2 viscosityForce = float2(0, 0);
 	for (uint i = 0; i < _numberOfParticles; i++) {
