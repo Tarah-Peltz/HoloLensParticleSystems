@@ -28,7 +28,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 	float pi = 3.1415927410125732421875f;
 	float density_sum = 0.0f;
 	for (uint i = 0; i < _numberOfParticles; i++) {
-		float2 delta = particleBuffer[id.x].positionAndDensity.xy - particleBuffer[i].positionAndDensity.xy;
+		float3 delta = particleBuffer[id.x].positionAndDensity.xyz - particleBuffer[i].positionAndDensity.xyz;
 		float r = length(delta);
 		if (r < _smoothingLength) //Can I add a UNITY_FLATTEN here?
 		{

@@ -49,13 +49,13 @@ public class SPHController : MonoBehaviour {
             particleArray[i].positionAndDensity.z = UnityEngine.Random.Range(-3f, 3f);
             particleArray[i].positionAndDensity.w = 1;
 
-            particleArray[i].velocityAndPressure.x = UnityEngine.Random.Range(.01f, .1f);
-            particleArray[i].velocityAndPressure.y = UnityEngine.Random.Range(.01f, .1f);
-            particleArray[i].velocityAndPressure.z = UnityEngine.Random.Range(.01f, .1f);
+            particleArray[i].velocityAndPressure.x = UnityEngine.Random.Range(0f, 200f);
+            particleArray[i].velocityAndPressure.y = 0f;
+            particleArray[i].velocityAndPressure.z = UnityEngine.Random.Range(0f, 200f);
             particleArray[i].velocityAndPressure.w = 0;
 
-            particleArray[i].force.x = UnityEngine.Random.Range(0f, 10000f);
-            particleArray[i].force.y = -9.5f;
+            particleArray[i].force.x = 1000f;
+            particleArray[i].force.y = 0f;
             particleArray[i].force.z = UnityEngine.Random.Range(.01f, .1f);
             particleArray[i].force.w = 1;
         }

@@ -27,14 +27,14 @@ float _viscosity;
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
 	float pi = 3.1415927410125732421875f;
-	float2 G = float2(500, -98000.);
-	float2 pressureForce = float2(0, 0);
-	float2 viscosityForce = float2(0, 0);
+	float3 G = float3(0, -98000., 0);
+	float3 pressureForce = float3(0, 0, 0);
+	float3 viscosityForce = float3(0, 0, 0);
 	for (uint i = 0; i < _numberOfParticles; i++) {
-		if (id.x == i) {
+		if (id.x == i) { //This line might be a problem. Don't all the particles have to check for this even though it only acts on one of them?
 			continue; //This forces it to jump to the next iteration of the for loop. Can we eliminate branching here?
 		}
-		float2 delta = particleBuffer[id.x].positionAndDensity.xy - particleBuffer[i].positionAndDensity.xy;
+		float3 delta = particleBuffer[id.x].positionAndDensity.xyz - particleBuffer[i].positionAndDensity.xyz;
 		float r = length(delta);
 		if (r < _smoothingLength) {
 
@@ -42,7 +42,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 				/ (2.0f * particleBuffer[i].positionAndDensity.w) * -45.f / (pi * pow(_smoothingLength, 6)) 
 				* pow(_smoothingLength - r, 2) * normalize(delta);
 
-			viscosityForce += _particleMass * (particleBuffer[i].velocityAndPressure.xy - particleBuffer[id.x].velocityAndPressure.xy) 
+			viscosityForce += _particleMass * (particleBuffer[i].velocityAndPressure.xyz - particleBuffer[id.x].velocityAndPressure.xyz) 
 				/ particleBuffer[i].positionAndDensity.w * 45.f / (pi * pow(_smoothingLength, 6)) 
 				* (_smoothingLength - r);
 				// Laplacian of viscosity kernel
@@ -50,6 +50,6 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 	}
 
 	viscosityForce *= _viscosity;
-	float2 externalForce = particleBuffer[id.x].positionAndDensity.w * G;
-	particleBuffer[id.x].force.xy = pressureForce + viscosityForce + externalForce;
+	float3 externalForce = particleBuffer[id.x].positionAndDensity.w * G;
+	particleBuffer[id.x].force.xyz = pressureForce + viscosityForce + externalForce;
 }

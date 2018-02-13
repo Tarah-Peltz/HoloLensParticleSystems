@@ -21,30 +21,39 @@ float _boundaryDamping;
 [numthreads(8, 1, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-	float2 acceleration = particleBuffer[id.x].force.xy / particleBuffer[id.x].positionAndDensity.w;
-	float2 newVelocity = particleBuffer[id.x].velocityAndPressure.xy + _timeStep * acceleration;
-	float2 newPosition = particleBuffer[id.x].positionAndDensity.xy + _timeStep * newVelocity;
+	float3 acceleration = particleBuffer[id.x].force.xyz / particleBuffer[id.x].positionAndDensity.w;
+	float3 newVelocity = particleBuffer[id.x].velocityAndPressure.xyz + _timeStep * acceleration;
+	float3 newPosition = particleBuffer[id.x].positionAndDensity.xyz + _timeStep * newVelocity;
 	//HAS TO BE A BETTER WAY TO DO THIS
-	if (newPosition.x < -6) {
-		newPosition.x = -6;
+	if (newPosition.x <= -2) {
+		newPosition.x = -2;
 		newVelocity.x *= -1 * _boundaryDamping;
 	}
-	else if (newPosition.x > 6)
+	else if (newPosition.x >= 2)
 	{
-		newPosition.x = 6;
+		newPosition.x = 2;
 		newVelocity.x *= -1 * _boundaryDamping;
 	}
-	else if (newPosition.y < 0)
+	if (newPosition.y <= 0)
 	{
 		newPosition.y = 0;
 		newVelocity.y *= -1 * _boundaryDamping;
 	}
-	else if (newPosition.y > 6)
+	else if (newPosition.y >= 6)
 	{
 		newPosition.y = 6;
 		newVelocity.y *= -1 * _boundaryDamping;
 	}
+	if (newPosition.z <= -2) {
+		newPosition.z = -2;
+		newVelocity.z *= -1 * _boundaryDamping;
+	}
+	else if (newPosition.z >= 2) {
+		newPosition.z = 2;
+		newVelocity.z *= -1 * _boundaryDamping;
+	}
+	
 
-	particleBuffer[id.x].velocityAndPressure.xy = newVelocity;
-	particleBuffer[id.x].positionAndDensity.xy = newPosition;
+	particleBuffer[id.x].velocityAndPressure.xyz = newVelocity;
+	particleBuffer[id.x].positionAndDensity.xyz = newPosition;
 }
