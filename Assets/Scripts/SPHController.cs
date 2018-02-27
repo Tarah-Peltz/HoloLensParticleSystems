@@ -1,9 +1,12 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Rendering;
 
 public class SPHController : MonoBehaviour {
     ComputeBuffer particleBuffer;
+    ComputeBuffer vertexBuffer;
+    CommandBuffer commandBuffer;
     int kernelID1;
     int kernelID2;
     int kernelID3;
@@ -18,6 +21,7 @@ public class SPHController : MonoBehaviour {
     public float stiffness = 2000f;
     public float viscosity = 3000f;
     public float boundaryDamping = .3f;
+    public Material waterMaterial;
     //public Material material;
     private Mesh mesh;
     Particle[] output;
@@ -39,7 +43,9 @@ public class SPHController : MonoBehaviour {
         mesh = new Mesh();
         GetComponent<MeshFilter>().mesh = mesh;
         particleBuffer = new ComputeBuffer(numberOfParticles, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Particle)));
+        vertexBuffer = new ComputeBuffer(numberOfParticles * 3, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Vector4)));
         Particle[] particleArray = new Particle[numberOfParticles];
+        Vector4[] vertexArray = new Vector4[numberOfParticles * 3];
         output = new Particle[numberOfParticles];
 
         for (int i = 0; i < numberOfParticles; ++i)
@@ -48,6 +54,10 @@ public class SPHController : MonoBehaviour {
             particleArray[i].positionAndDensity.y = UnityEngine.Random.Range(2f, 5f);
             particleArray[i].positionAndDensity.z = UnityEngine.Random.Range(-3f, 3f);
             particleArray[i].positionAndDensity.w = 1;
+
+            vertexArray[i * 3] = new Vector4((float)(particleArray[i].positionAndDensity.x), (float)(particleArray[i].positionAndDensity.y + trianglePointSize), (float)(particleArray[i].positionAndDensity.z), 1.0f);
+            vertexArray[i * 3 + 1] = new Vector4((float)(particleArray[i].positionAndDensity.x + trianglePointSize), (float)(particleArray[i].positionAndDensity.y - trianglePointSize), (float)(particleArray[i].positionAndDensity.z), 1.0f);
+            vertexArray[i * 3 + 2] = new Vector4((float)(particleArray[i].positionAndDensity.x - trianglePointSize), (float)(particleArray[i].positionAndDensity.y - trianglePointSize), (float)(particleArray[i].positionAndDensity.z), 1.0f);
 
             particleArray[i].velocityAndPressure.x = UnityEngine.Random.Range(0f, 200f);
             particleArray[i].velocityAndPressure.y = 0f;
@@ -60,12 +70,14 @@ public class SPHController : MonoBehaviour {
             particleArray[i].force.w = 1;
         }
         particleBuffer.SetData(particleArray);
+        vertexBuffer.SetData(vertexArray);
         kernelID1 = densityPressureCompute.FindKernel("CSMain");
         kernelID2 = forceCompute.FindKernel("CSMain");
         kernelID3 = integrateCompute.FindKernel("CSMain");
         densityPressureCompute.SetBuffer(kernelID1, "particleBuffer", particleBuffer);
         forceCompute.SetBuffer(kernelID2, "particleBuffer", particleBuffer);
         integrateCompute.SetBuffer(kernelID3, "particleBuffer", particleBuffer);
+        integrateCompute.SetBuffer(kernelID3, "vertexBuffer", vertexBuffer);
         CreateMesh(particleArray);
 
         densityPressureCompute.SetFloat("_time", Time.realtimeSinceStartup);
@@ -86,6 +98,7 @@ public class SPHController : MonoBehaviour {
         integrateCompute.SetFloat("_timeStep", .0001f);
         integrateCompute.SetInt("_numberOfParticles", numberOfParticles);
         integrateCompute.SetFloat("_boundaryDamping", boundaryDamping);
+        integrateCompute.SetFloat("_particleSize", trianglePointSize);
         integrateCompute.Dispatch(kernelID1, numberOfParticles / 8, 1, 1);
     }
 
@@ -112,6 +125,7 @@ public class SPHController : MonoBehaviour {
         integrateCompute.SetFloat("_timeStep", .0001f);
         integrateCompute.SetInt("_numberOfParticles", numberOfParticles);
         integrateCompute.SetFloat("_boundaryDamping", boundaryDamping);
+        integrateCompute.SetFloat("_particleSize", trianglePointSize);
         integrateCompute.Dispatch(kernelID1, numberOfParticles / 8, 1, 1);
 
         if (Time.frameCount % 10 == 0) particleBuffer.GetData(output);
@@ -123,6 +137,9 @@ public class SPHController : MonoBehaviour {
             pointArray.Add(new Vector3(output[i].positionAndDensity.x - trianglePointSize, output[i].positionAndDensity.y - trianglePointSize, output[i].positionAndDensity.z));
         }
         mesh.SetVertices(pointArray);
+        Matrix4x4 transformationMatrix = Matrix4x4.identity;
+        commandBuffer = new CommandBuffer(); //Example online creates a new one each pass. Is this necessary? Does it impact efficiency?
+        commandBuffer.DrawProceduralIndirect(transformationMatrix, waterMaterial, -1, MeshTopology.Triangles, vertexBuffer, 0, null);
         //Debug.Log(output[0].position.x);
     }
 

@@ -10,13 +10,16 @@ struct Particle
 
 
 
-// Particle's data, shared with the shader
+// Particle's data
 RWStructuredBuffer<Particle> particleBuffer;
+//Final position data to be sent to the rendering pipeline
+RWStructuredBuffer<float4> vertexBuffer;
 
 // Variables passed from the CPU
 float _timeStep;
 int _numberOfParticles;
 float _boundaryDamping;
+float _particleSize;
 
 [numthreads(8, 1, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)

@@ -40,7 +40,8 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
         TextureImporter A = (TextureImporter)AssetImporter.GetAtPath(path);
         A.isReadable = true;
         AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);*/
-
+        heightMap = rotateTexture(heightMap, true);
+        heightMap = rotateTexture(heightMap, true);
         b = heightMappedObject.GetComponent<Renderer>().bounds;
         heightMapBottomLeft = new Vector3(b.center.x - b.extents.x, 0f, b.center.z - b.extents.z);
         heightMapBottomRight = new Vector3(b.center.x + b.extents.x, 0f, b.center.z - b.extents.z);
@@ -78,7 +79,7 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
         kernelID = compute.FindKernel("CSMain");
         compute.SetBuffer(kernelID, "particleBuffer", particleBuffer);
         CreateMesh(particleArray);
-        compute.SetTexture(kernelID, "_heightMapTexture", heightMap);
+        compute.SetTexture(kernelID, "HeightMapTexture", heightMap);
         /*colorBuffer = new ComputeBuffer(heightMap.width * heightMap.height, sizeof(float) * 4);
         Color[] colorData = heightMap.GetPixels(0);
         colorBuffer.SetData(colorData);
@@ -91,6 +92,32 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
 
     }
 
+    //https://answers.unity.com/questions/951835/rotate-the-contents-of-a-texture.html
+    Texture2D rotateTexture(Texture2D originalTexture, bool clockwise)
+    {
+        Color32[] original = originalTexture.GetPixels32();
+        Color32[] rotated = new Color32[original.Length];
+        int w = originalTexture.width;
+        int h = originalTexture.height;
+
+        int iRotated, iOriginal;
+
+        for (int j = 0; j < h; ++j)
+        {
+            for (int i = 0; i < w; ++i)
+            {
+                iRotated = (i + 1) * h - j - 1;
+                iOriginal = clockwise ? original.Length - 1 - (j * w + i) : j * w + i;
+                rotated[iRotated] = original[iOriginal];
+            }
+        }
+
+        Texture2D rotatedTexture = new Texture2D(h, w);
+        rotatedTexture.SetPixels32(rotated);
+        rotatedTexture.Apply();
+        return rotatedTexture;
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -101,9 +128,9 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
         //In theory, setting time from C# is the same as the built in time value of the vertex shader: https://forum.unity.com/threads/global-shader-variables-in-compute-shaders.471211/
 
         compute.SetFloat("_time", Time.realtimeSinceStartup);
-       // compute.SetFloat("textureXLength", 2*b.extents.x);
-       // compute.SetFloat("textureZLength", 2*b.extents.z);
-       // compute.SetVector("textureCenter", b.center);
+        compute.SetFloat("textureXLength", 2*b.extents.x);
+        compute.SetFloat("textureZLength", 2*b.extents.z);
+        compute.SetVector("textureCenter", b.center);
 
         compute.Dispatch(kernelID, numberOfParticles/8, 1, 1);
         particleBuffer.GetData(output);
@@ -113,9 +140,11 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
             pointArray.Add(new Vector3(output[i].position.x, output[i].position.y + trianglePointSize, output[i].position.z));
             pointArray.Add(new Vector3(output[i].position.x + trianglePointSize, output[i].position.y - trianglePointSize, output[i].position.z));
             pointArray.Add(new Vector3(output[i].position.x - trianglePointSize, output[i].position.y - trianglePointSize, output[i].position.z));
+            //if (i % 10 == 0)
+                //Debug.Log(output[i].position.y);
         }
         mesh.SetVertices(pointArray);
-        Debug.Log(output[0].position.y);
+        
         //Debug.Log(output[0].position.x);
     }
 
