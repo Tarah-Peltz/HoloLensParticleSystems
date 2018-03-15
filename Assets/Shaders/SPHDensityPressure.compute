@@ -6,7 +6,7 @@ struct Particle
 {
 	float4 positionAndDensity;
 	float4 velocityAndPressure;
-	float4 force;
+	float4 forceAndIsStatic;
 };
 
 
@@ -25,16 +25,19 @@ int _numberOfParticles;
 [numthreads(8, 1, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-	float pi = 3.1415927410125732421875f;
-	float density_sum = 0.0f;
-	for (uint i = 0; i < _numberOfParticles; i++) {
-		float3 delta = particleBuffer[id.x].positionAndDensity.xyz - particleBuffer[i].positionAndDensity.xyz;
-		float r = length(delta);
-		if (r < _smoothingLength) //Can I add a UNITY_FLATTEN here?
-		{
-			density_sum += _particleMass * /* poly6 kernel */ 315.f * pow(_smoothingLength * _smoothingLength - r * r, 3) / (64.f * pi * pow(_smoothingLength, 9));
+	if (particleBuffer[id.x].forceAndIsStatic.w == 0.0) {
+		float pi = 3.1415927410125732421875f;
+		float density_sum = 0.0f;
+		for (uint i = 0; i < _numberOfParticles; i++) {
+			float3 delta = particleBuffer[id.x].positionAndDensity.xyz - particleBuffer[i].positionAndDensity.xyz;
+			float r = length(delta);
+			if (r < _smoothingLength) //Can I add a UNITY_FLATTEN here?
+			{
+				density_sum += _particleMass * /* poly6 kernel */ 315.f * pow(_smoothingLength * _smoothingLength - r * r, 3) / (64.f * pi * pow(_smoothingLength, 9));
+			}
 		}
+		particleBuffer[id.x].positionAndDensity.w = density_sum;
+		particleBuffer[id.x].velocityAndPressure.w = max(_stiffness * (density_sum - _restingDensity), 0.f);
 	}
-	particleBuffer[id.x].positionAndDensity.w = density_sum;
-	particleBuffer[id.x].velocityAndPressure.w = max(_stiffness * (density_sum - _restingDensity), 0.f);
+
 }

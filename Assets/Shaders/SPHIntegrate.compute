@@ -5,58 +5,90 @@ struct Particle
 {
 	float4 positionAndDensity;
 	float4 velocityAndPressure;
-	float4 force;
+	float4 forceAndIsStatic;
 };
 
 
 
 // Particle's data
 RWStructuredBuffer<Particle> particleBuffer;
-//Final position data to be sent to the rendering pipeline
-RWStructuredBuffer<float4> vertexBuffer;
+Texture2D<float4> HeightMapTexture;
+SamplerState samplerHeightMapTexture;
 
 // Variables passed from the CPU
 float _timeStep;
 int _numberOfParticles;
 float _boundaryDamping;
 float _particleSize;
+float4 textureCenter;
+float textureXLength;
+float textureZLength;
+int mode;
 
 [numthreads(8, 1, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-	float3 acceleration = particleBuffer[id.x].force.xyz / particleBuffer[id.x].positionAndDensity.w;
+
+	float3 acceleration = particleBuffer[id.x].forceAndIsStatic.xyz / particleBuffer[id.x].positionAndDensity.w;
 	float3 newVelocity = particleBuffer[id.x].velocityAndPressure.xyz + _timeStep * acceleration;
 	float3 newPosition = particleBuffer[id.x].positionAndDensity.xyz + _timeStep * newVelocity;
+	float changeStatic = 0.0;
+
+	float4 texLookup = HeightMapTexture.SampleLevel(samplerHeightMapTexture, float2(((newPosition.x +
+		(textureXLength / 2) - textureCenter.x) / textureXLength),
+		((newPosition.z + (textureZLength / 2) - textureCenter.z) / textureZLength)), 0.0);
+
 	//HAS TO BE A BETTER WAY TO DO THIS
-	if (newPosition.x <= -2) {
-		newPosition.x = -2;
-		newVelocity.x *= -1 * _boundaryDamping;
+	if (mode == 0) {
+		if (newPosition.x <= -2.5) {
+			newPosition.x = -2.5;
+			newVelocity.x *= -1 * _boundaryDamping;
+		}
+		else if (newPosition.x >= 2.5)
+		{
+			newPosition.x = 2.5;
+			newVelocity.x *= -1 * _boundaryDamping;
+		}
+		//if (newPosition.y <= (texLookup.y * 6.0))
+		//{
+			//newPosition.y = texLookup.y * 6.0;
+			//newVelocity.y *= -1 * _boundaryDamping;
+		//}
+		if (newPosition.y <= -.8)
+		{
+			newPosition.y = -.8;
+			newVelocity.y *= -1 * _boundaryDamping;
+		}
+		//else if (newPosition.y >= 6)
+		//{
+			//newPosition.y = 6;
+			//newVelocity.y *= -1 * _boundaryDamping;
+		//}
+		if (newPosition.z <= 0.5) {
+			newPosition.z = 0.5;
+			newVelocity.z *= -1 * _boundaryDamping;
+		}
+		else if (newPosition.z >= 5.5) {
+			newPosition.z = 5.5;
+			newVelocity.z *= -1 * _boundaryDamping;
+		}
 	}
-	else if (newPosition.x >= 2)
-	{
-		newPosition.x = 2;
-		newVelocity.x *= -1 * _boundaryDamping;
+	else if (mode == 1) {
+		if ((newPosition.x * newPosition.x + (newPosition.y - 6) * (newPosition.y - 6) + newPosition.z * newPosition.z) >= 64) {
+			newVelocity.x *= -1 * _boundaryDamping;
+			newVelocity.y *= -1 * _boundaryDamping;
+			newVelocity.z *= -1 * _boundaryDamping;
+		}
+
+		if (abs(newVelocity.x) + abs(newVelocity.y) + abs(newVelocity.z) < 10.0) {
+			newPosition.y = particleBuffer[id.x].positionAndDensity.y;
+			newVelocity.y = 0.0;
+			changeStatic = 1.0;
+		}
 	}
-	if (newPosition.y <= 0)
-	{
-		newPosition.y = 0;
-		newVelocity.y *= -1 * _boundaryDamping;
-	}
-	else if (newPosition.y >= 6)
-	{
-		newPosition.y = 6;
-		newVelocity.y *= -1 * _boundaryDamping;
-	}
-	if (newPosition.z <= -2) {
-		newPosition.z = -2;
-		newVelocity.z *= -1 * _boundaryDamping;
-	}
-	else if (newPosition.z >= 2) {
-		newPosition.z = 2;
-		newVelocity.z *= -1 * _boundaryDamping;
-	}
-	
+
 
 	particleBuffer[id.x].velocityAndPressure.xyz = newVelocity;
 	particleBuffer[id.x].positionAndDensity.xyz = newPosition;
+	particleBuffer[id.x].forceAndIsStatic.w = changeStatic;
 }

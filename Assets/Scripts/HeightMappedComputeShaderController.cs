@@ -58,18 +58,18 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
         Particle[] particleArray = new Particle[numberOfParticles];
         output = new Particle[numberOfParticles];
 
-        for (int i = 0; i < numberOfParticles; ++i) { 
 
-                particleArray[i].position.x = UnityEngine.Random.Range((float)(heightMapBottomLeft.x), (float)(heightMapBottomRight.x));
-                //particleArray[i].position.x = heightMapBottomLeft.x + ((heightMapBottomRight.x - heightMapBottomLeft.x) * j / heightMap.width/8);
-                //particleArray[i].position.y = UnityEngine.Random.Range(b.center.y + b.extents.y + .1f, b.center.y + 2*b.extents.y);
-                particleArray[i].position.y = 1f;
-                particleArray[i].position.z = UnityEngine.Random.Range((float)(heightMapBottomLeft.z), (float)(heightMapUpperLeft.z));
-                //particleArray[i].position.z = heightMapBottomLeft.z + ((heightMapBottomRight.z - heightMapBottomLeft.z) *  / heightMap.height/8);
-                particleArray[i].position.w = 1;
+        for (int i = 0; i < numberOfParticles; ++i) {
+            particleArray[i].position.x = UnityEngine.Random.Range((float)(heightMapBottomLeft.x), (float)(heightMapBottomRight.x));
+
+            particleArray[i].position.y = 6f;
+            particleArray[i].position.z = UnityEngine.Random.Range((float)(heightMapBottomLeft.z) , (float)(heightMapUpperLeft.z) );
+  
+
+            particleArray[i].position.w = 1;
 
                 particleArray[i].velocity.x = UnityEngine.Random.Range(.01f, .1f);
-                particleArray[i].velocity.y = UnityEngine.Random.Range(.01f, .1f);
+            particleArray[i].velocity.y = .01f;
                 particleArray[i].velocity.z = UnityEngine.Random.Range(.01f, .1f);
                 particleArray[i].velocity.w = 0;
             
@@ -80,6 +80,7 @@ public class HeightMappedComputeShaderController : MonoBehaviour {
         compute.SetBuffer(kernelID, "particleBuffer", particleBuffer);
         CreateMesh(particleArray);
         compute.SetTexture(kernelID, "HeightMapTexture", heightMap);
+        heightMappedObject.transform.position = new Vector3(heightMappedObject.transform.position.x + 6f, heightMappedObject.transform.position.y, heightMappedObject.transform.position.z - 10f);
         /*colorBuffer = new ComputeBuffer(heightMap.width * heightMap.height, sizeof(float) * 4);
         Color[] colorData = heightMap.GetPixels(0);
         colorBuffer.SetData(colorData);
